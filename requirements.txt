@@ -1,6 +1,6 @@
 streamlit
-xgboost
 pandas
 numpy
-scikit-learn
-imbalanced-learn
+xgboost
+scikit-learn==1.2.2
+imbalanced-learn==0.10.1

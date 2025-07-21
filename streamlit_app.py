@@ -19,9 +19,10 @@ from imblearn.over_sampling import SMOTE
 @st.cache_resource
 def load_model_and_features():
     # Load and preprocess data
-    df = pd.read_csv('/content/parkinsons_disease_data.csv')
+    df = pd.read_csv('parkinsons_disease_data.csv')
     df.drop_duplicates(inplace=True)
     df.drop("DoctorInCharge", axis=1, inplace=True)
+    df.drop("PatientID", axis=1, inplace=True)
 
     numerical_columns = [
         'Age', 'BMI', 'SystolicBP', 'DiastolicBP', 'CholesterolTotal',
@@ -89,27 +90,35 @@ model, numerical_columns, categorical_columns, scaler, label_encoders = load_mod
 
 st.subheader("Enter your medical and demographic information below:")
 
-user_input = {}
+feature_names = [ 'Age', 'Gender', 'Ethnicity', 'EducationLevel', 'BMI',
+       'Smoking', 'AlcoholConsumption', 'PhysicalActivity', 'DietQuality',
+       'SleepQuality', 'FamilyHistoryParkinsons', 'TraumaticBrainInjury',
+       'Hypertension', 'Diabetes', 'Depression', 'Stroke', 'SystolicBP',
+       'DiastolicBP', 'CholesterolTotal', 'CholesterolLDL', 'CholesterolHDL',
+       'CholesterolTriglycerides', 'UPDRS', 'MoCA', 'FunctionalAssessment',
+       'Tremor', 'Rigidity', 'Bradykinesia', 'PosturalInstability',
+       'SpeechProblems', 'SleepDisorders', 'Constipation']
 
-# Input numerical features
-for col in numerical_columns:
-    user_input[col] = st.number_input(col, value=0.0, step=0.01)
+input_data = []
 
-# Input categorical features
-for col in categorical_columns:
-    options = label_encoders[col].classes_.tolist()
-    selected = st.selectbox(col, options)
-    user_input[col] = label_encoders[col].transform([selected])[0]
+for feature in feature_names:
+    val = st.number_input(f"{feature}", min_value=-1000.0, value=0.0, step=0.01)
+    input_data.append(val)
 
 if st.button("Predict"):
-    input_df = pd.DataFrame([user_input])
+    input_df = pd.DataFrame([input_data], columns=feature_names)
 
-    # Scale numerical features
+    # Scale numerical columns only
     input_df[numerical_columns] = scaler.transform(input_df[numerical_columns])
 
+    # Predict
     prediction = model.predict(input_df)[0]
+    probability = model.predict_proba(input_df)[0][1]
 
+    # Output
     if prediction == 1:
         st.error("⚠️ Likely Parkinson’s Disease detected.")
     else:
         st.success("✅ Unlikely to have Parkinson’s Disease.")
+
+    st.info(f"🧮 Model confidence: {probability:.2%}")

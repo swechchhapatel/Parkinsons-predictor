@@ -110,7 +110,7 @@ if st.button("Predict"):
 
     # Scale numerical columns only
     input_df[numerical_columns] = pt.transform(input_df[numerical_columns])
-    input_df[numerical_columns] = scaler.transform(input_df[numerical_columns]
+    input_df[numerical_columns] = scaler.transform(input_df[numerical_columns])
 
     # Predict
     prediction = model.predict(input_df)[0]

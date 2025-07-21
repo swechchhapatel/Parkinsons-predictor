@@ -85,7 +85,7 @@ st.title("🧠 Parkinson’s Disease Prediction App")
 st.write("Enter the values for each feature below:")
 
 # Load cached model and column names
-model, numerical_columns, categorical_columns, scaler, label_encoders = load_data_and_model()
+model, numerical_columns, categorical_columns, scaler, label_encoders = load_model_and_features()
 
 st.subheader("Enter your medical and demographic information below:")
 

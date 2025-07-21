@@ -77,7 +77,7 @@ def load_model_and_features():
     model = RandomForestClassifier()
     model.fit(X_train, y_train)
 
-    return model, numerical_columns, categorical_columns, scaler, label_encoders
+    return model, numerical_columns, categorical_columns, scaler, label_encoders, pt
 
 
 # Streamlit UI
@@ -109,7 +109,8 @@ if st.button("Predict"):
     input_df = pd.DataFrame([input_data], columns=feature_names)
 
     # Scale numerical columns only
-    input_df[numerical_columns] = scaler.transform(input_df[numerical_columns])
+    input_df[numerical_columns] = pt.transform(input_df[numerical_columns])
+    input_df[numerical_columns] = scaler.transform(input_df[numerical_columns]
 
     # Predict
     prediction = model.predict(input_df)[0]

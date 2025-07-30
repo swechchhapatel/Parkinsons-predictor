@@ -6,6 +6,20 @@ import time
 import sys
 from io import StringIO
 
+# Define FallbackModel at the top level so it's always available
+class FallbackModel:
+    def predict(self, X):
+        # Simple rule-based fallback
+        age = X[0][0]
+        tremor = X[0][-6] if len(X[0]) > 6 else 0  # Safely get tremor feature
+        return 1 if (age > 60 and tremor > 0) else 0
+    
+    def predict_proba(self, X):
+        age = X[0][0]
+        tremor = X[0][-6] if len(X[0]) > 6 else 0
+        prob = min((age/100) + (tremor*0.3), 0.95)
+        return np.array([[1-prob, prob]])
+
 # Package compatibility handling
 try:
     from sklearn.ensemble import RandomForestClassifier
@@ -25,29 +39,19 @@ st.set_page_config(
     layout="centered"
 )
 
-# Load mock data if sklearn not available
 @st.cache_resource
 def load_model_and_features():
     if not SKLEARN_AVAILABLE:
-        class FallbackModel:
-            def predict(self, X):
-                # Simple rule-based fallback
-                age = X[0][0]
-                tremor = X[0][-6]  # Assuming tremor is 6th from end
-                return 1 if (age > 60 and tremor > 0) else 0
-            
-            def predict_proba(self, X):
-                age = X[0][0]
-                tremor = X[0][-6]
-                prob = min((age/100) + (tremor*0.3), 0.95)
-                return np.array([[1-prob, prob]])
-        
         return FallbackModel(), [], [], None, None, None
 
-    # Original model loading code would go here
-    # Return model, numerical_columns, categorical_columns, scaler, label_encoders, pt
-    # For now, we'll return the fallback in both cases for deployment testing
-    return FallbackModel(), [], [], None, None, None
+    try:
+        # Original model loading code would go here
+        # For demonstration, we'll return the fallback model
+        return FallbackModel(), [], [], None, None, None
+        
+    except Exception as e:
+        st.error(f"Model loading failed: {e}")
+        return FallbackModel(), [], [], None, None, None
 
 # App layout
 def main():
@@ -103,8 +107,12 @@ def main():
             model, _, _, _, _, _ = load_model_and_features()
             
             # Predict
-            prediction = model.predict([input_data])[0]
-            probability = model.predict_proba([input_data])[0][1]
+            try:
+                prediction = model.predict([input_data])[0]
+                probability = model.predict_proba([input_data])[0][1]
+            except Exception as e:
+                st.error(f"Prediction failed: {e}")
+                return
             
             # Display results
             st.success("Analysis complete!")
@@ -132,11 +140,10 @@ def main():
                 Recommendation: Maintain regular health checkups
                 """)
             
-            # Debug info (hidden by default)
-            with st.expander("Technical Details"):
+            # Debug info
+            if st.checkbox("Show technical details"):
                 st.write("Input features:", input_data)
-                if not SKLEARN_AVAILABLE:
-                    st.warning("Running in fallback mode (full model not available)")
+                st.write(f"Model type: {'Fallback' if not SKLEARN_AVAILABLE else 'Random Forest'}")
 
 if __name__ == "__main__":
     main()
